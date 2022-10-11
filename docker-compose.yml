@@ -17,8 +17,8 @@ services:
     environment:
       MYSQL_RANDOM_ROOT_PASSWORD: "12345678"
       MYSQL_DATABASE: "weather"
-      MYSQL_USER: "admin"
-      MYSQL_PASSWORD: "12345678"
+      MYSQL_USER: ${DB_USERNAME}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
       # OR if you want to use "root" as the user, just these two lines
       # MYSQL_ROOT_PASSWORD: ${DATABASE_PASSWORD}
       # MYSQL_DATABASE: ${DATABASE_NAME}
@@ -26,7 +26,7 @@ services:
     # we mount a data volume to make sure we don't lose data
     volumes:
       - mysql_data:/var/lib/mysql
-    command: --default-authentication-plugin=mysql_native_password
+    command: --default-authentication-plugin=mysql_native_password --sql_mode=""
   api:
     container_name:  "weather_api"
     # we want to use the image which is build from our Dockerfile

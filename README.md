@@ -1,0 +1,3 @@
+# Golang OpenWeatherMap
+
+## Installation
