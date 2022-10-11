@@ -11,6 +11,7 @@ import (
 	"log"
 	"net/http"
 	"net/url"
+	"os"
 	"strconv"
 	"time"
 )
@@ -23,7 +24,6 @@ func main() {
 
 	//Migrations If True
 	boolValue, err := strconv.ParseBool(viperEnvVariable("DB_MIGRATE"))
-
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -145,7 +145,10 @@ func cron(db *sql.DB) {
 }
 
 func dbConnection() (db *sql.DB, err error) {
-	return sql.Open(viperEnvVariable("DB_DRIVER"), viperEnvVariable("DB_USERNAME")+":"+viperEnvVariable("DB_PASSWORD")+"@tcp("+viperEnvVariable("DB_HOST")+")/")
+	if _, err := os.Stat("/.dockerenv"); err == nil {
+		return sql.Open(viperEnvVariable("DB_DRIVER"), viperEnvVariable("DB_USERNAME")+":"+viperEnvVariable("DB_PASSWORD")+"@tcp(db:"+viperEnvVariable("DB_PORT")+")/")
+	}
+	return sql.Open(viperEnvVariable("DB_DRIVER"), viperEnvVariable("DB_USERNAME")+":"+viperEnvVariable("DB_PASSWORD")+"@tcp("+viperEnvVariable("DB_HOST")+":"+viperEnvVariable("DB_PORT")+")/")
 }
 
 func migrate(db *sql.DB) {
@@ -205,6 +208,7 @@ func migrate(db *sql.DB) {
 			Date: "2022-10-09",
 		},
 	}
+	db.Exec("SET GLOBAL sql_mode=(SELECT REPLACE(@@sql_mode,'ONLY_FULL_GROUP_BY',''));")
 	for _, v := range seed {
 		insForm, err := db.Prepare("INSERT INTO weather.meteo_table(city_name, main_temp, date) VALUES(?,?,?)")
 		if err != nil {
