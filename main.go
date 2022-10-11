@@ -23,7 +23,7 @@ func main() {
 
 	//Migrations If True
 	boolValue, err := strconv.ParseBool(viperEnvVariable("DB_MIGRATE"))
-	fmt.Println(boolValue)
+
 	if err != nil {
 		log.Fatal(err)
 	}
