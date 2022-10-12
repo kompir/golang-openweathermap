@@ -15,6 +15,7 @@ RUN go mod download && go mod verify
 RUN go get github.com/githubnemo/CompileDaemon
 # Missing dependency
 RUN go mod download github.com/sagikazarmark/crypt
+RUN go mod download github.com/DATA-DOG/go-sqlmock
 
 # Copy and build the app
 COPY . .
