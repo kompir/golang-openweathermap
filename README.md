@@ -33,3 +33,6 @@ Builds, (re)creates, starts, and attaches to containers for a service.
 
 ## Tests
 go test ./...
+
+## Application Diagram
+https://app.diagrams.net/
