@@ -26,9 +26,9 @@ Builds the application
 Executes builded application
 
 ## Containerization 
-###docker compose build --no-cache
+### docker compose build --no-cache
 Building the image without cache
-###docker compose up
+### docker compose up
 Builds, (re)creates, starts, and attaches to containers for a service.
 
 ##Tests
