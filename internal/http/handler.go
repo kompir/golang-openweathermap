@@ -38,7 +38,7 @@ func (h *HttpHandler) Max(w http.ResponseWriter, r *http.Request) {
 	days, _ := strconv.Atoi(vars["days"])
 
 	history, err := h.app.Max(days)
-	t, err := template.ParseFiles("web/templates/min.html")
+	t, err := template.ParseFiles("web/templates/max.html")
 	if err != nil {
 		fmt.Fprint(w, http.StatusInternalServerError)
 		return
@@ -51,7 +51,7 @@ func (h *HttpHandler) Average(w http.ResponseWriter, r *http.Request) {
 	days, _ := strconv.Atoi(vars["days"])
 
 	history, err := h.app.Average(days)
-	t, err := template.ParseFiles("web/templates/min.html")
+	t, err := template.ParseFiles("web/templates/average.html")
 	if err != nil {
 		fmt.Fprint(w, http.StatusInternalServerError)
 		return
