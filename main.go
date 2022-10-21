@@ -35,7 +35,7 @@ func main() {
 		log.Fatal(err)
 	}
 	if boolValue == true {
-		env.Migrate(db)
+		env.LoadSQLFile(db, "database/migration.sql")
 	}
 
 	//APi

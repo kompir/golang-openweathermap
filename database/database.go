@@ -3,7 +3,9 @@ package database
 import (
 	"database/sql"
 	"github.com/spf13/viper"
+	"io/ioutil"
 	"log"
+	"strings"
 )
 
 type History struct {
@@ -26,6 +28,31 @@ func ViperEnvVariable(key string) string {
 		log.Fatalf("Invalid type assertion")
 	}
 	return value
+}
+
+// Database Migration & Seeder From File
+func LoadSQLFile(db *sql.DB, sqlFile string) error {
+	file, err := ioutil.ReadFile(sqlFile)
+	if err != nil {
+		return err
+	}
+	tx, err := db.Begin()
+	if err != nil {
+		return err
+	}
+	defer func() {
+		tx.Rollback()
+	}()
+	for _, q := range strings.Split(string(file), ";") {
+		q := strings.TrimSpace(q)
+		if q == "" {
+			continue
+		}
+		if _, err := tx.Exec(q); err != nil {
+			return err
+		}
+	}
+	return tx.Commit()
 }
 
 // Database Migration & Seeder
