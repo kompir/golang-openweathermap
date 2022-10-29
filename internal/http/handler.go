@@ -10,13 +10,11 @@ import (
 )
 
 type HttpHandler struct {
-	app *app.App
+	app *app.AppStorage
 }
 
-func NewHttpHandler(app *app.App) *HttpHandler {
-	return &HttpHandler{
-		app: app,
-	}
+func NewHttpHandler(app *app.AppStorage) *HttpHandler {
+	return &HttpHandler{app: app}
 }
 
 func (h *HttpHandler) Min(w http.ResponseWriter, r *http.Request) {

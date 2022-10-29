@@ -4,10 +4,6 @@ import (
 	"github.com/kompir/golang-openweathermap/internal/storage"
 )
 
-type App struct {
-	DB storage.StorageI
-}
-
 type History struct {
 	City string
 	Temp float32
@@ -15,11 +11,15 @@ type History struct {
 	Days int
 }
 
-func NewApp(db storage.StorageI) *App {
-	return &App{DB: db}
+type AppStorage struct {
+	DB storage.StorageI
 }
 
-func (a *App) Min(days int) (*History, error) {
+func NewApp(db storage.StorageI) *AppStorage {
+	return &AppStorage{DB: db}
+}
+
+func (a *AppStorage) Min(days int) (*History, error) {
 	selDB, err := a.DB.Min(days)
 	if err != nil {
 		panic(err.Error())
@@ -40,7 +40,7 @@ func (a *App) Min(days int) (*History, error) {
 	return history, nil
 }
 
-func (a *App) Max(days int) (*History, error) {
+func (a *AppStorage) Max(days int) (*History, error) {
 	selDB, err := a.DB.Max(days)
 	if err != nil {
 		panic(err.Error())
@@ -61,7 +61,7 @@ func (a *App) Max(days int) (*History, error) {
 	return history, nil
 }
 
-func (a *App) Average(days int) (*History, error) {
+func (a *AppStorage) Average(days int) (*History, error) {
 	selDB, err := a.DB.Average(days)
 	if err != nil {
 		panic(err.Error())

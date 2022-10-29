@@ -2,14 +2,14 @@ package storage
 
 import "database/sql"
 
-type Storage struct {
-	db *sql.DB
-}
-
 type StorageI interface {
 	Min(days int) (*sql.Rows, error)
 	Max(days int) (*sql.Rows, error)
 	Average(days int) (*sql.Rows, error)
+}
+
+type Storage struct {
+	db *sql.DB
 }
 
 func NewStorage(db *sql.DB) *Storage {

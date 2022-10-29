@@ -10,6 +10,7 @@ import (
 	app2 "github.com/kompir/golang-openweathermap/internal/app"
 	http2 "github.com/kompir/golang-openweathermap/internal/http"
 	storage2 "github.com/kompir/golang-openweathermap/internal/storage"
+	"github.com/kompir/golang-openweathermap/internal/vault"
 	"io"
 	"log"
 	"net/http"
@@ -21,8 +22,10 @@ import (
 
 func main() {
 
+	conf, err := vault.New()
+
 	//Connection To Database
-	db, _ := dbConnection()
+	db, _ := dbConnection(conf)
 	defer db.Close()
 
 	storage := storage2.NewStorage(db)
@@ -143,9 +146,24 @@ func getWeatherAPI(w *OpenWheatherMap) []byte {
 	return resp
 }
 
-func dbConnection() (db *sql.DB, err error) {
-	if _, err := os.Stat("/.dockerenv"); err == nil {
-		return sql.Open(env.ViperEnvVariable("DB_DRIVER"), env.ViperEnvVariable("DB_USERNAME")+":"+env.ViperEnvVariable("DB_PASSWORD")+"@tcp(db:"+env.ViperEnvVariable("DB_PORT")+")/")
+func dbConnection(conf *vault.Provider) (db *sql.DB, err error) {
+	get := func(v string) string {
+		res, err := conf.Get(v)
+		if err != nil {
+			log.Fatalf("Couldn't get configuration value for %s: %s", v, err)
+		}
+
+		return res
 	}
-	return sql.Open(env.ViperEnvVariable("DB_DRIVER"), env.ViperEnvVariable("DB_USERNAME")+":"+env.ViperEnvVariable("DB_PASSWORD")+"@tcp("+env.ViperEnvVariable("DB_HOST")+":"+env.ViperEnvVariable("DB_PORT")+")/")
+	dbHost := env.ViperEnvVariable("DB_HOST")
+	dbPort := env.ViperEnvVariable("DB_PORT")
+
+	dbUsername := get(env.ViperEnvVariable("DB_USERNAME"))
+	dbPassword := get(env.ViperEnvVariable("DB_PASSWORD"))
+	dbDriver := env.ViperEnvVariable("DB_DRIVER")
+
+	if _, err := os.Stat("/.dockerenv"); err == nil {
+		return sql.Open(dbDriver, dbUsername+":"+dbPassword+"@tcp(db:"+dbPort+")/")
+	}
+	return sql.Open(dbDriver, dbUsername+":"+dbPassword+"@tcp("+dbHost+":"+dbPort+")/")
 }

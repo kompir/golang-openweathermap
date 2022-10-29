@@ -1,15 +1,14 @@
 package app_test
 
 import (
+	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/kompir/golang-openweathermap/internal/app"
 	storage2 "github.com/kompir/golang-openweathermap/internal/storage"
 	"regexp"
 	"testing"
-
-	"github.com/DATA-DOG/go-sqlmock"
 )
 
-func prepareAppMin(t *testing.T, days int) *app.App {
+func prepareAppMin(t *testing.T, days int) *app.AppStorage {
 	db, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("An error '%s' was not expected when opening a database connection", err)
@@ -21,12 +20,12 @@ func prepareAppMin(t *testing.T, days int) *app.App {
 		WithArgs(3).
 		WillReturnRows(rows)
 
-	return &app.App{
+	return &app.AppStorage{
 		DB: storage,
 	}
 }
 
-func prepareAppMax(t *testing.T, days int) *app.App {
+func prepareAppMax(t *testing.T, days int) *app.AppStorage {
 	db, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("An error '%s' was not expected when opening a database connection", err)
@@ -38,12 +37,12 @@ func prepareAppMax(t *testing.T, days int) *app.App {
 		WithArgs(3).
 		WillReturnRows(rows)
 
-	return &app.App{
+	return &app.AppStorage{
 		DB: storage,
 	}
 }
 
-func prepareAppAverage(t *testing.T, days int) *app.App {
+func prepareAppAverage(t *testing.T, days int) *app.AppStorage {
 	db, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("An error '%s' was not expected when opening a database connection", err)
@@ -55,7 +54,7 @@ func prepareAppAverage(t *testing.T, days int) *app.App {
 		WithArgs(3).
 		WillReturnRows(rows)
 
-	return &app.App{
+	return &app.AppStorage{
 		DB: storage,
 	}
 }
