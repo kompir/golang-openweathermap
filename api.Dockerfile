@@ -1,4 +1,4 @@
-FROM golang:1.16-alpine
+FROM golang:1.17-alpine
 WORKDIR /app
 
 # add some necessary packages
@@ -16,6 +16,7 @@ RUN go get github.com/githubnemo/CompileDaemon
 # Missing dependency
 RUN go mod download github.com/sagikazarmark/crypt
 RUN go mod download github.com/DATA-DOG/go-sqlmock
+RUN go mod download github.com/go-test/deep
 
 # Copy and build the app
 COPY . .
@@ -26,3 +27,4 @@ ADD https://raw.githubusercontent.com/eficode/wait-for/v2.1.0/wait-for /usr/loca
 RUN chmod +rx /usr/local/bin/wait-for /entrypoint.sh
 
 ENTRYPOINT [ "sh", "/entrypoint.sh" ]
+#CMD

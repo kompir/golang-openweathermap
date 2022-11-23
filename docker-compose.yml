@@ -1,49 +1,73 @@
-version: '3.7'
-
+version: '3'
 services:
+  vault:
+    image: vault
+    command: server -dev
+    ports:
+      - "8200:8200"
+    environment:
+      VAULT_DEV_ROOT_TOKEN_ID: myroot
+      VAULT_DEV_LISTEN_ADDRESS: 0.0.0.0:8200
+  vault-client:
+    image: vault
+    command:
+      - /bin/sh
+      - -c
+      - |
+        while ! $$(vault status &> /dev/null); do echo "Trying to connect to vault"; sleep 2; done
+        sleep 40
+        vault login $${VAULT_DEV_ROOT_TOKEN_ID}
+        vault auth enable approle
+        vault policy write dbwebapp /policies/dbwebapp-policy.hcl
+        vault write auth/approle/role/dbwebapp policies="dbwebapp" role_id="dbrole"
+        vault write auth/approle/role/dbwebapp/custom-secret-id secret_id=$${SECRET_ID}
+        vault secrets enable database
+        vault write database/config/mysql-database \
+            plugin_name=mysql-database-plugin \
+            connection_url="{{username}}:{{password}}@tcp(db:3306)/" \
+            allowed_roles="vault-mysql-role" \
+            username="$${DBUSER}" \
+            password="$${DBPASS}"
+        vault write database/roles/vault-mysql-role \
+            db_name=mysql-database \
+            creation_statements="CREATE USER '{{name}}'@'%' IDENTIFIED BY '{{password}}';GRANT INSERT ON weather.* TO '{{name}}'@'%';" \
+            default_ttl="1h" \
+            max_ttl="24h"
+    volumes:
+      - ./policies/:/policies/
+    environment:
+      VAULT_DEV_ROOT_TOKEN_ID: "myroot"
+      VAULT_ADDR: "http://vault:8200"
+      DBUSER: "vault"
+      DBPASS: "vault"
+      SECRET_ID: "testsecret1"
+    depends_on:
+      - db
   db:
     container_name: "weather_db"
-    #platform: linux/x86_64
-    build:
-      context: .
-      dockerfile: db.Dockerfile
-    networks:
-      - default
-    restart: always
-    ports:
-      # <Port exposed> : < MySQL Port running inside container>
-      - "3306:3306"
-    # setting some env vars to create the DB
-    environment:
-      MYSQL_RANDOM_ROOT_PASSWORD: "12345678"
-      MYSQL_DATABASE: "weather"
-      MYSQL_USER: ${DB_USERNAME}
-      MYSQL_PASSWORD: ${DB_PASSWORD}
-      # OR if you want to use "root" as the user, just these two lines
-      # MYSQL_ROOT_PASSWORD: ${DATABASE_PASSWORD}
-      # MYSQL_DATABASE: ${DATABASE_NAME}
-
-    # we mount a data volume to make sure we don't lose data
+    image: mysql/mysql-server:8.0
     volumes:
-      - mysql_data:/var/lib/mysql
-    command: --default-authentication-plugin=mysql_native_password --sql_mode=""
+        - ./docker-entrypoint-initdb.d/:/docker-entrypoint-initdb.d/
+    ports:
+        - "3306:3306"
+    command: [ "mysqld", "--default-authentication-plugin=mysql_native_password" ]
+    environment:
+        - MYSQL_ROOT_PASSWORD=mysql
   api:
-    container_name:  "weather_api"
-    # we want to use the image which is build from our Dockerfile
+    container_name: "weather_api"
+    command: sleep 10
     build:
       context: .
       dockerfile: api.Dockerfile
     ports:
       - "8008:8008"
-    # we are depending on the mysql backend
     depends_on:
       - db
-    # We mount the working dir into the container, handy for development
-    # This is what makes the hot reloading work inside of a Docker container
     volumes:
       - .:/app/
-
-networks:
-  default:
+    networks:
+      - default
 volumes:
   mysql_data:
+networks:
+  default:
