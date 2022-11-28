@@ -11,8 +11,6 @@ import (
 	http2 "github.com/kompir/golang-openweathermap/internal/http"
 	storage2 "github.com/kompir/golang-openweathermap/internal/storage"
 	"github.com/kompir/golang-openweathermap/internal/vault"
-
-	//"github.com/kompir/golang-openweathermap/internal/vault"
 	"io"
 	"log"
 	"net/http"
@@ -23,8 +21,6 @@ import (
 )
 
 func main() {
-
-	//conf, err := vault.newVaultClient()
 
 	//Connection To Database
 	db, _ := dbConnection()
@@ -40,7 +36,11 @@ func main() {
 		log.Fatal(err)
 	}
 	if boolValue == true {
-		env.LoadSQLFile(db, "database/migration.sql")
+		fmt.Println("Migrating File: database/migration.sql")
+		err := env.LoadSQLFile(db, "database/migration.sql")
+		if err != nil {
+			return
+		}
 	}
 
 	//APi
@@ -151,48 +151,34 @@ func getWeatherAPI(w *OpenWheatherMap) []byte {
 func dbConnection() (db *sql.DB, err error) {
 
 	errChan := make(chan error)
-
-	//get := func(v string) string {
-	//	res, err := conf.Get(v)
-	//	if err != nil {
-	//		log.Fatalf("Couldn't get configuration value for %s: %s", v, err)
-	//	}
-	//
-	//	return res
-	//}
-
 	vaultToken := env.ViperEnvVariable("VAULT_TOKEN")
 	vaultAddr := env.ViperEnvVariable("VAULT_ADDRESS")
 	vaultRoleId := env.ViperEnvVariable("VAULTROLEID")
 	vaultSecretId := env.ViperEnvVariable("VAULTSECRETID")
-	//path := env.ViperEnvVariable("VAULT_PATH")
-
 	dbHost := env.ViperEnvVariable("DB_HOST")
 	dbPort := env.ViperEnvVariable("DB_PORT")
-
 	dbUsername := env.ViperEnvVariable("DB_USERNAME")
 	dbPassword := env.ViperEnvVariable("DB_PASSWORD")
-
-	// get db credentials
-	if dbUsername == "" && dbPassword == "" {
-		vaultClient, err := vault.NewVaultClient(vaultAddr)
-		dbUsername, dbPassword, err = vaultClient.GetCredentials(vaultAddr, vaultToken, vaultRoleId, vaultSecretId)
-		if err != nil {
-			log.Fatal(err)
-		}
-		go func() {
-			errChan <- vaultClient.RegularlyRenewLease()
-		}()
-	}
-	if dbUsername == "" || dbPassword == "" {
-		log.Fatal("No database credentials given (neither via environment, command line, or vault)")
-	}
-
-	fmt.Println("usernmae pass: " + dbUsername + dbPassword)
 	dbDriver := env.ViperEnvVariable("DB_DRIVER")
 
 	if _, err := os.Stat("/.dockerenv"); err == nil {
+		if dbUsername == "" && dbPassword == "" {
+			vaultClient, err := vault.NewVaultClient(vaultAddr)
+			dbUsername, dbPassword, err = vaultClient.GetCredentials(vaultAddr, vaultToken, vaultRoleId, vaultSecretId)
+			if err != nil {
+				log.Fatal(err)
+			}
+			go func() {
+				errChan <- vaultClient.RegularlyRenewLease()
+			}()
+		}
+		if dbUsername == "" || dbPassword == "" {
+			log.Fatal("No database credentials given (neither via environment, command line, or vault)")
+		}
+
 		return sql.Open(dbDriver, dbUsername+":"+dbPassword+"@tcp(db:"+dbPort+")/")
+
 	}
+
 	return sql.Open(dbDriver, dbUsername+":"+dbPassword+"@tcp("+dbHost+":"+dbPort+")/")
 }
